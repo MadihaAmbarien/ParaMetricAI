@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Outlet, NavLink } from "react-router-dom";
-import { Activity, Utensils, Brain, LayoutDashboard, LogOut, ChevronDown, User } from "lucide-react";
+import { Activity, Utensils, Brain, LayoutDashboard, LogOut, ChevronDown, User, ShieldAlert } from "lucide-react";
 
 export default function AppLayout() {
   const navigate = useNavigate();
@@ -20,8 +20,10 @@ export default function AppLayout() {
 
   const nav = [
     { to: "/app", label: "Dashboard", icon: <LayoutDashboard size={17} />, end: true },
+    { to: "/app/routine", label: "Routine", icon: <Activity size={17} /> },
     { to: "/app/nutrition", label: "Nutrition", icon: <Utensils size={17} /> },
     { to: "/app/fatigue", label: "Fatigue", icon: <Brain size={17} /> },
+    { to: "/app/injury", label: "Injury Risk", icon: <ShieldAlert size={17} /> },
   ];
 
   return (

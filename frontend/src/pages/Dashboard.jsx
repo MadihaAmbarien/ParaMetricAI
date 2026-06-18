@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Utensils, Brain, TrendingUp, Calendar, ArrowRight, AlertCircle } from "lucide-react";
+import { Utensils, Brain, TrendingUp, Calendar, ArrowRight, AlertCircle, ShieldAlert } from "lucide-react";
 import { api } from "../services/api";
 import FatigueMeter from "../components/FatigueMeter";
 import NutrientBar from "../components/NutrientBar";
@@ -14,12 +14,14 @@ export default function Dashboard() {
   const [nutrients, setNutrients] = useState(null);
   const [compliance, setCompliance] = useState(null);
   const [rda, setRda] = useState(null);
+  const [injury, setInjury] = useState(null);
 
   useEffect(() => {
     api.getToday().then(setFatigue).catch(() => {});
     api.getDailyNutrients(today).then(setNutrients).catch(() => {});
     api.getCompliance().then(setCompliance).catch(() => {});
     api.getRDA().then(setRda).catch(() => {});
+    api.getInjuryStatus().then(setInjury).catch(() => {});
   }, [today]);
 
   const fatigueScore = fatigue?.fatigue_score ?? null;
@@ -33,7 +35,7 @@ export default function Dashboard() {
       </div>
 
       {/* Quick status cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatusCard
           icon={<Brain size={20} className="text-purple-500" />}
           title="Today's Fatigue"
@@ -41,6 +43,14 @@ export default function Dashboard() {
           subtitle={fatigue?.label || "Do your daily check-in"}
           color="purple"
           onClick={() => navigate("/app/fatigue")}
+        />
+        <StatusCard
+          icon={<ShieldAlert size={20} className="text-red-500" />}
+          title="Injury Risk"
+          value={injury ? `${injury.score}/100` : "—"}
+          subtitle={injury ? `${injury.category} (${injury.at_risk_area})` : "Perform check-in"}
+          color="red"
+          onClick={() => navigate("/app/injury")}
         />
         <StatusCard
           icon={<Utensils size={20} className="text-orange-500" />}
@@ -133,7 +143,7 @@ export default function Dashboard() {
       </div>
 
       {/* Quick actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <QuickAction
           icon={<Brain size={22} className="text-purple-400" />}
           title="Daily Check-In"
@@ -143,11 +153,26 @@ export default function Dashboard() {
           dark
         />
         <QuickAction
+          icon={<ShieldAlert size={22} className="text-red-400" />}
+          title="Injury prevention"
+          desc="Track daily joint strain & prevention plans."
+          cta="View Monitor"
+          onClick={() => navigate("/app/injury")}
+          dark
+        />
+        <QuickAction
           icon={<Calendar size={22} className="text-orange-500" />}
           title="Weekly Meal Plan"
           desc="View your AI-generated Indian meal plan."
           cta="View Plan"
           onClick={() => navigate("/app/nutrition")}
+        />
+        <QuickAction
+          icon={<TrendingUp size={22} className="text-indigo-500" />}
+          title="Training Routine"
+          desc="Para-athlete tailored S&C training."
+          cta="View Routine"
+          onClick={() => navigate("/app/routine")}
         />
       </div>
     </div>
@@ -162,7 +187,13 @@ function greeting() {
 }
 
 function StatusCard({ icon, title, value, subtitle, color, onClick }) {
-  const border = { purple:"border-purple-100 hover:border-purple-200", orange:"border-orange-100 hover:border-orange-200", green:"border-green-100 hover:border-green-200" }[color];
+  const border = {
+    purple: "border-purple-100 hover:border-purple-200",
+    orange: "border-orange-100 hover:border-orange-200",
+    green: "border-green-100 hover:border-green-200",
+    red: "border-red-100 hover:border-red-200"
+  }[color] || "border-gray-100 hover:border-gray-200";
+
   return (
     <button onClick={onClick} className={`bg-white rounded-2xl p-5 border ${border} text-left w-full hover:shadow-md transition-all group`}>
       <div className="flex items-center gap-2 mb-3">
@@ -177,17 +208,16 @@ function StatusCard({ icon, title, value, subtitle, color, onClick }) {
 
 function QuickAction({ icon, title, desc, cta, onClick, dark }) {
   return (
-    <div className={`${dark ? "bg-gray-900 text-white" : "bg-orange-50 text-gray-900"} rounded-2xl p-6 flex items-center justify-between gap-4`}>
+    <div className={`${dark ? "bg-gray-900 text-white" : "bg-orange-50 text-gray-900"} rounded-2xl p-6 flex flex-col justify-between gap-4`}>
       <div className="flex items-start gap-4">
         <div className={`w-11 h-11 rounded-2xl ${dark ? "bg-white/10" : "bg-white"} flex items-center justify-center shrink-0`}>{icon}</div>
         <div>
           <h3 className="font-bold text-base">{title}</h3>
-          <p className={`text-sm mt-0.5 ${dark ? "text-gray-400" : "text-gray-500"}`}>{desc}</p>
+          <p className={`text-xs mt-0.5 ${dark ? "text-gray-400" : "text-gray-500"}`}>{desc}</p>
         </div>
       </div>
       <button onClick={onClick}
-        className={`shrink-0 px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-colors
-        ${dark ? "bg-orange-500 hover:bg-orange-600 text-white" : "bg-orange-500 hover:bg-orange-600 text-white"}`}>
+        className="w-full mt-2 py-2.5 rounded-xl text-xs font-bold transition-colors bg-orange-500 hover:bg-orange-600 text-white shadow-md shadow-orange-500/10">
         {cta}
       </button>
     </div>

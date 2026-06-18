@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../services/api";
 import FatigueMeter from "../components/FatigueMeter";
+import BodyDiagram from "../components/BodyDiagram";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { Moon, Flame, Smile, Dumbbell, CheckCircle, ChevronRight, Activity } from "lucide-react";
 
@@ -12,7 +13,7 @@ const SLIDERS = [
 ];
 
 export default function FatiguePage() {
-  const [checkin, setCheckin] = useState({ sleep_hours:7, soreness:3, mood:7, training_load:5, notes:"" });
+  const [checkin, setCheckin] = useState({ sleep_hours:7, soreness:3, mood:7, training_load:5, notes:"", pain_reports:[] });
   const [result, setResult] = useState(null);
   const [today, setToday] = useState(null);
   const [history, setHistory] = useState([]);
@@ -34,6 +35,18 @@ export default function FatiguePage() {
       setHistory(hist.history || []);
     } catch (e) { alert(e.message); }
     setLoading(false);
+  }
+
+  function editCheckin() {
+    setCheckin({
+      sleep_hours: current?.sleep_hours ?? 7,
+      soreness: current?.soreness ?? 3,
+      mood: current?.mood ?? 7,
+      training_load: current?.training_load ?? 5,
+      notes: current?.notes ?? "",
+      pain_reports: current?.pain_reports ?? [],
+    });
+    setSubmitted(false);
   }
 
   const current = result || today;
@@ -69,7 +82,7 @@ export default function FatiguePage() {
               <div className="grid grid-cols-4 gap-1.5 mt-4 mb-5">
                 {[["Low","< 35","#22c55e"],["Moderate","35–65","#eab308"],["High","65–82","#f97316"],["Critical","82+","#ef4444"]].map(([l,r,c]) => (
                   <div key={l} className="text-center bg-white/5 rounded-xl p-2">
-                    <div className="w-2 h-2 rounded-full mx-auto mb-1" style={{background:c}} />
+                    <div className="w-2.5 h-2.5 rounded-full mx-auto mb-1" style={{background:c}} />
                     <p className="text-xs font-bold" style={{color:c}}>{l}</p>
                     <p className="text-xs text-gray-500">{r}</p>
                   </div>
@@ -87,7 +100,7 @@ export default function FatiguePage() {
               )}
 
               {/* Today's inputs summary */}
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2 mb-4">
                 {[
                   ["Sleep", `${current.sleep_hours}h`, <Moon size={14}/>],
                   ["Soreness", `${current.soreness}/10`, <Flame size={14}/>],
@@ -100,6 +113,29 @@ export default function FatiguePage() {
                   </div>
                 ))}
               </div>
+
+              {current.pain_reports && current.pain_reports.length > 0 && (
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                  <p className="text-xs text-orange-400 font-bold uppercase tracking-wider mb-2">Logged Pain & Discomfort</p>
+                  <div className="space-y-1.5">
+                    {current.pain_reports.map((rep, idx) => (
+                      <div key={idx} className="text-xs text-gray-300 flex justify-between items-center bg-white/5 p-2 rounded-lg">
+                        <span>{rep.label || rep.body_part}</span>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          rep.severity === "Severe" ? "bg-red-500/20 text-red-400" :
+                          rep.severity === "Moderate" ? "bg-amber-500/20 text-amber-400" :
+                          "bg-emerald-500/20 text-emerald-400"
+                        }`}>{rep.severity}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <button onClick={editCheckin}
+                className="w-full mt-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold py-3 rounded-2xl transition-all text-xs flex items-center justify-center gap-2">
+                Edit Today's Check-In & Pain Reports
+              </button>
             </>
           ) : (
             <>
@@ -122,6 +158,14 @@ export default function FatiguePage() {
                   </div>
                 </div>
               ))}
+
+              <div className="mb-5 border-t border-white/5 pt-5">
+                <label className="text-sm font-semibold text-gray-300 block mb-2">Pain & Discomfort Map (optional)</label>
+                <BodyDiagram
+                  painReports={checkin.pain_reports || []}
+                  onChange={reports => setCheckin(c => ({ ...c, pain_reports: reports }))}
+                />
+              </div>
 
               <div className="mb-5">
                 <label className="text-sm font-semibold text-gray-300 block mb-2">Notes (optional)</label>
@@ -182,7 +226,14 @@ export default function FatiguePage() {
                         <p className="text-sm font-semibold text-gray-800">
                           {new Date(h.date).toLocaleDateString("en-IN", { weekday:"short", day:"numeric", month:"short" })}
                         </p>
-                        <p className="text-xs text-gray-400">Sleep {h.sleep_hours}h · Load {h.training_load}/10</p>
+                        <p className="text-xs text-gray-400">
+                          Sleep {h.sleep_hours}h · Load {h.training_load}/10
+                          {h.pain_reports && h.pain_reports.length > 0 && (
+                            <span className="text-[10px] text-orange-500 block mt-0.5">
+                              Pain: {h.pain_reports.map(r => r.label || r.body_part).join(", ")}
+                            </span>
+                          )}
+                        </p>
                       </div>
                       <div className="text-right">
                         <p className="text-lg font-black" style={{color:c}}>{h.fatigue_score}</p>

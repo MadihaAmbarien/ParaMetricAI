@@ -31,4 +31,16 @@ export const api = {
   checkin: (d) => req("/api/fatigue/checkin", { method: "POST", body: JSON.stringify(d) }),
   getToday: () => req("/api/fatigue/today"),
   getHistory: (days = 14) => req(`/api/fatigue/history?days=${days}`),
+
+  // Routine planner
+  getOnboarding: () => req("/api/routine/onboard"),
+  saveOnboarding: (d) => req("/api/routine/onboard", { method: "POST", body: JSON.stringify(d) }),
+  generatePlan: () => req("/api/routine/generate", { method: "POST" }),
+  getPlan: () => req("/api/routine/plan"),
+  rateSession: (d) => req("/api/routine/rate", { method: "POST", body: JSON.stringify(d) }),
+  getRatings: () => req("/api/routine/ratings"),
+  getProgress: () => req("/api/routine/progress"),
+
+  getInjuryStatus: () => req("/api/injury/status"),
+  getInjuryAnalytics: () => req("/api/injury/analytics"),
 };
